@@ -24,6 +24,6 @@ io.on('connection', function(socket){
 	});
 });
 
-http.listen(9080, function(){
+http.listen(process.env.PORT || 9080, function(){
 	console.log('listening on *:9080');
 });

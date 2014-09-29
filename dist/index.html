@@ -1,9 +1,27 @@
 <html>
 	<head>
+		<style>
+			a:link {color: #000000; text-decoration: none; }
+			.a:active {color: #0000ff; text-decoration: underline; }
+			a:visited {color: #000000; text-decoration: none; }
+			a:hover {color: #000000; text-decoration: underline; }
+			
+			.container{
+				margin: auto;
+				width: 50%;
+				text-align: center;
+				background-color: rgba(175, 173, 173, 0.73);
+				padding: 50px;
+				color: black;
+			}
+		</style>
 	</head>
 	<body>
-		<p><a href="player.html">Remote controller</a></p>
-		<p><a href="screen.html">Display</a></p>
-		<p><a href="debug.html">Debug</a></p>
+		<div class="container">
+			<p><a href="player.html">
+				<strong>Join Game</strong> - this device will be a remote controller / joystick</a></p>
+			<p><a href="screen.html"><strong>Create a Game</strong> - this device will be used to display the Game</a></p>
+			<p><a href="debug.html">Debug</a></p>
+		</div>
 	</body>
 </html>

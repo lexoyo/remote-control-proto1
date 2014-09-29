@@ -57,14 +57,12 @@ var ScreenApp = function() {
 	haxe.Timer.delay(function() {
 	},2000);
 	this.socket.on("key",function(id,key,isDown) {
-		haxe.Log.trace("key",{ fileName : "ScreenApp.hx", lineNumber : 38, className : "ScreenApp", methodName : "new", customParams : [id,key,isDown]});
 		var player = _g.players.get(id);
 		player.keys.set(key,isDown);
-		haxe.Log.trace(player.keys.toString(),{ fileName : "ScreenApp.hx", lineNumber : 41, className : "ScreenApp", methodName : "new"});
 		_g.update();
 	});
 	this.socket.on("connection.close",function(id1) {
-		haxe.Log.trace("close connection",{ fileName : "ScreenApp.hx", lineNumber : 45, className : "ScreenApp", methodName : "new", customParams : [id1]});
+		haxe.Log.trace("close connection",{ fileName : "ScreenApp.hx", lineNumber : 43, className : "ScreenApp", methodName : "new", customParams : [id1]});
 		var player1 = _g.players.get(id1);
 		if(player1 != null) {
 			_g.players.remove(id1);
@@ -72,13 +70,12 @@ var ScreenApp = function() {
 		}
 	});
 	this.socket.on("connection.open",function(id2,type) {
-		haxe.Log.trace("new connection",{ fileName : "ScreenApp.hx", lineNumber : 53, className : "ScreenApp", methodName : "new", customParams : [id2,type]});
+		haxe.Log.trace("new connection",{ fileName : "ScreenApp.hx", lineNumber : 51, className : "ScreenApp", methodName : "new", customParams : [id2,type]});
 		var player2 = _g.players.get(id2);
 		if(player2 == null) {
 			player2 = new Player(_g.game);
 			_g.players.set(id2,player2);
 		}
-		_g.game.camera.follow(player2.sprite);
 		player2.sprite.animations.add("right",[5,6,7,8],10,true);
 	});
 };
@@ -111,26 +108,24 @@ ScreenApp.prototype = {
 		}
 	}
 	,update: function() {
+		var numMoving = 0;
+		var sumX = 0;
+		var sumY = 0;
 		var $it0 = this.players.iterator();
 		while( $it0.hasNext() ) {
 			var player = $it0.next();
-			haxe.Log.trace("xxx2",{ fileName : "ScreenApp.hx", lineNumber : 100, className : "ScreenApp", methodName : "update", customParams : [player.keys]});
 			player.update(this.platforms);
+			if(player.sprite.body.velocity.x) {
+				numMoving++;
+				sumX += player.sprite.x;
+				sumY += player.sprite.y;
+			}
 		}
-	}
-};
-var Std = function() { };
-Std.__name__ = true;
-Std.string = function(s) {
-	return js.Boot.__string_rec(s,"");
-};
-var StringBuf = function() {
-	this.b = "";
-};
-StringBuf.__name__ = true;
-StringBuf.prototype = {
-	add: function(x) {
-		this.b += Std.string(x);
+		if(numMoving > 0) {
+			haxe.Log.trace("moving",{ fileName : "ScreenApp.hx", lineNumber : 109, className : "ScreenApp", methodName : "update", customParams : [numMoving,Math.round(sumX / numMoving)]});
+			this.game.camera.x = Math.round(sumX / numMoving) - 400;
+			this.game.camera.y = Math.round(sumY / numMoving) - 300;
+		}
 	}
 };
 var haxe = {};
@@ -196,20 +191,6 @@ haxe.ds.StringMap.prototype = {
 			var i = this.it.next();
 			return this.ref["$" + i];
 		}};
-	}
-	,toString: function() {
-		var s = new StringBuf();
-		s.b += "{";
-		var it = this.keys();
-		while( it.hasNext() ) {
-			var i = it.next();
-			if(i == null) s.b += "null"; else s.b += "" + i;
-			s.b += " => ";
-			s.add(Std.string(this.get(i)));
-			if(it.hasNext()) s.b += ", ";
-		}
-		s.b += "}";
-		return s.b;
 	}
 };
 var js = {};

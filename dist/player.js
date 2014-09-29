@@ -11,8 +11,11 @@ var PlayerApp = function() {
 	this.socket.on("key",function(id,key,isDown) {
 		haxe.Log.trace("key",{ fileName : "PlayerApp.hx", lineNumber : 36, className : "PlayerApp", methodName : "new", customParams : [id,key,isDown]});
 	});
-	this.socket.on("newConnection",function(id1,type) {
-		haxe.Log.trace("new connection",{ fileName : "PlayerApp.hx", lineNumber : 40, className : "PlayerApp", methodName : "new", customParams : [id1,type]});
+	this.socket.on("connection.close",function(id1) {
+		haxe.Log.trace("close connection",{ fileName : "PlayerApp.hx", lineNumber : 40, className : "PlayerApp", methodName : "new", customParams : [id1]});
+	});
+	this.socket.on("connection.open",function(id2,type) {
+		haxe.Log.trace("new connection",{ fileName : "PlayerApp.hx", lineNumber : 43, className : "PlayerApp", methodName : "new", customParams : [id2,type]});
 	});
 	this.keys = new haxe.ds.StringMap();
 	this.keys.set("left",false);
@@ -42,7 +45,7 @@ PlayerApp.prototype = {
 				_g.keys.set(key,isDown);
 				isDown;
 				_g.socket.emit("key",key,_g.keys.get(key));
-				haxe.Log.trace("isdown",{ fileName : "PlayerApp.hx", lineNumber : 69, className : "PlayerApp", methodName : "update", customParams : [isDown]});
+				haxe.Log.trace("isdown",{ fileName : "PlayerApp.hx", lineNumber : 72, className : "PlayerApp", methodName : "update", customParams : [isDown]});
 			}
 		};
 		checkKey("left");

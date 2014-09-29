@@ -35,10 +35,8 @@ class ScreenApp
 			//socket.emit('init', 'screen');
 		}, 2000);
 		socket.on('key', function(id, key, isDown){
-			trace('key', id, key, isDown);
 			var player = players.get(id);
 			player.keys.set(key, isDown);
-			trace(player.keys);
 			update();
 		});
 		socket.on('connection.close', function(id){
@@ -56,7 +54,7 @@ class ScreenApp
 				player = new Player(game);
 				players.set(id, player);
 			}
-			game.camera.follow(player.sprite);
+			//game.camera.follow(player.sprite);
 			player.sprite.animations.add('right', [5, 6, 7, 8], 10, true);
 		});
 	}
@@ -96,9 +94,24 @@ class ScreenApp
 	}
 
 	function update() {
+		var numMoving = 0;
+		var sumX: Float = 0;
+		var sumY: Float = 0;
 		for (player in players){
-			trace('xxx2', player.keys);
 			player.update(platforms);
+			var isMoving = (player.sprite.body.velocity.x != 0)
+				|| (player.sprite.body.velocity.y != 0);
+			if(isMoving){
+				numMoving++;
+				sumX += player.sprite.x;
+				sumY += player.sprite.y;
+			}
 		}
+		if(numMoving > 0){
+			trace('moving', numMoving, Math.round(sumX/numMoving));
+			game.camera.x = Math.round(sumX/numMoving) - 400;
+			game.camera.y = Math.round(sumY/numMoving) - 300;
+		}
+		
 	}
 }

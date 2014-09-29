@@ -36,7 +36,10 @@ class PlayerApp
 			trace('key', id, key, isDown);
 //			Reflect.setField(keys, key, isDown);
 		});
-		socket.on('newConnection', function(id, type){
+		socket.on('connection.close', function(id){
+			trace('close connection', id);
+		});	
+		socket.on('connection.open', function(id, type){
 			trace('new connection', id, type);
 		});
 		keys = new Map();

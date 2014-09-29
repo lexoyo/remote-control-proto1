@@ -1,0 +1,5 @@
+-js dist/main.js
+-main Main.hx
+-lib phaser
+-debug
+-cp src

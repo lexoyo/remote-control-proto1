@@ -14,33 +14,51 @@ import phaser.core.Group;
 import phaser.physics.Physics;
 import phaser.tilemap.Tilemap;
 
-class Main
+class ScreenApp
 {
 	var game:Game;
 	var player: Player;
 	var platforms: Group;
-	var cursors: Dynamic;
 	var socket: Dynamic;
-	var keys: Dynamic;
+	var players: Map<String, Player>;
 
 	static function main(){
-		new Main();
-		socket = untyped io();
-		socket.emit('init', 'screen');
-		socket.on('keydown', function(id, key){
-			trace('keydown', id, key);
-		});
-		keys = {
-			left: false,
-			right: false,
-			up: false
-		};
+		new ScreenApp();
 	}
 
 	public function new ()
 	{
 		game = new Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
-		player = new Player(game);
+		players = new Map();
+		socket = untyped io();
+		haxe.Timer.delay(function(){
+			//socket.emit('init', 'screen');
+		}, 2000);
+		socket.on('key', function(id, key, isDown){
+			trace('key', id, key, isDown);
+			var player = players.get(id);
+			player.keys.set(key, isDown);
+			trace(player.keys);
+			update();
+		});
+		socket.on('connection.close', function(id){
+			trace('close connection', id);
+			var player = players.get(id);
+			if (player != null){
+				players.remove(id);
+				player.dispose();
+			}
+		});
+		socket.on('connection.open', function(id, type){
+			trace('new connection', id, type);
+			var player = players.get(id);
+			if(player == null) {
+				player = new Player(game);
+				players.set(id, player);
+			}
+			game.camera.follow(player.sprite);
+			player.sprite.animations.add('right', [5, 6, 7, 8], 10, true);
+		});
 	}
 
 
@@ -49,7 +67,9 @@ class Main
 		game.load.image('background','assets/misc/starfield.jpg');
 		//game.load.image('ground', 'assets/sprites/platform.png');
 		game.load.image('ground', 'assets/tilemaps/tiles/ground_1x1.png');
-		player.preload();
+		//player.preload();
+
+		game.load.spritesheet('dude', 'assets/games/starstruck/dude.png', 32, 48);
 	}
 
 	function create()
@@ -73,26 +93,12 @@ class Main
 			//ground.angle = -2;
 			ground.body.immovable = true;
 		}
-		player.create();
-		game.camera.follow(player.sprite);
-		game.physics.arcade.collide(player.sprite, platforms);
-
-		cursors = game.input.keyboard.createCursorKeys();
-
 	}
 
 	function update() {
-		function checkKey(key){
-		    if (cursors[key].isDown !== keys[key])
-		    {
-				keys[key] = cursors[key].isDown;
-				io.emit('key', key, keys[key]);
-		    }
-		};
-		checkKey('left');
-		checkKey('right');
-		checkKey('up');
-
-		player.update(keys, platforms);
+		for (player in players){
+			trace('xxx2', player.keys);
+			player.update(platforms);
+		}
 	}
 }

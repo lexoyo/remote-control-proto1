@@ -1,5 +1,16 @@
--js dist/main.js
--main Main.hx
+-js dist/player.js
+-main PlayerApp.hx
 -lib phaser
 -debug
 -cp src
+
+--next
+
+-js dist/screen.js
+-main ScreenApp.hx
+-lib phaser
+-debug
+-cp src
+
+
+

@@ -1,34 +1,18 @@
 (function () { "use strict";
-var HxOverrides = function() { };
-HxOverrides.__name__ = true;
-HxOverrides.iter = function(a) {
-	return { cur : 0, arr : a, hasNext : function() {
-		return this.cur < this.arr.length;
-	}, next : function() {
-		return this.arr[this.cur++];
-	}};
-};
-var Main = function() {
+var IMap = function() { };
+IMap.__name__ = true;
+var PlayerApp = function() {
 	var _g = this;
 	this.game = new Phaser.Game(800,600,Phaser.AUTO,"",{ preload : $bind(this,this.preload), create : $bind(this,this.create), update : $bind(this,this.update)});
-	this.players = new haxe.ds.StringMap();
 	this.socket = io();
 	haxe.Timer.delay(function() {
 		_g.socket.emit("init","screen");
 	},2000);
 	this.socket.on("key",function(id,key,isDown) {
-		haxe.Log.trace("key",{ fileName : "Main.hx", lineNumber : 40, className : "Main", methodName : "new", customParams : [id,key,isDown]});
-		_g.keys[key] = isDown;
+		haxe.Log.trace("key",{ fileName : "PlayerApp.hx", lineNumber : 36, className : "PlayerApp", methodName : "new", customParams : [id,key,isDown]});
 	});
 	this.socket.on("newConnection",function(id1,type) {
-		haxe.Log.trace("new connection",{ fileName : "Main.hx", lineNumber : 44, className : "Main", methodName : "new", customParams : [id1,type]});
-		var player = _g.players.get(id1);
-		if(player == null) {
-			player = new Player(_g.game);
-			_g.players.set(id1,player);
-		}
-		_g.game.camera.follow(player.sprite);
-		player.sprite.animations.add("right",[5,6,7,8],10,true);
+		haxe.Log.trace("new connection",{ fileName : "PlayerApp.hx", lineNumber : 40, className : "PlayerApp", methodName : "new", customParams : [id1,type]});
 	});
 	this.keys = new haxe.ds.StringMap();
 	this.keys.set("left",false);
@@ -38,33 +22,16 @@ var Main = function() {
 	this.keys.set("up",false);
 	false;
 };
-Main.__name__ = true;
-Main.main = function() {
-	new Main();
+PlayerApp.__name__ = true;
+PlayerApp.main = function() {
+	new PlayerApp();
 };
-Main.prototype = {
+PlayerApp.prototype = {
 	preload: function() {
 		this.game.load.image("background","assets/misc/starfield.jpg");
 		this.game.load.image("ground","assets/tilemaps/tiles/ground_1x1.png");
-		this.game.load.spritesheet("dude","assets/games/starstruck/dude.png",32,48);
 	}
 	,create: function() {
-		var worldWidth = 4000;
-		var worldHeight = 4000;
-		this.game.physics.startSystem(Phaser.Physics.ARCADE);
-		this.game.world.setBounds(0,0,worldWidth,worldHeight);
-		this.game.add.tileSprite(0,0,worldWidth,worldHeight,"background",0);
-		this.platforms = this.game.add.group();
-		this.platforms.enableBody = true;
-		var w = 32;
-		var deltaY = 0;
-		var _g = 0;
-		while(_g < 100) {
-			var i = _g++;
-			var ground = this.platforms.create(i * w,deltaY + this.game.world.height / 2 - w,"ground");
-			deltaY += Math.round((Math.random() - .5) * 100);
-			ground.body.immovable = true;
-		}
 		this.cursors = this.game.input.keyboard.createCursorKeys();
 	}
 	,update: function() {
@@ -75,51 +42,12 @@ Main.prototype = {
 				_g.keys.set(key,isDown);
 				isDown;
 				_g.socket.emit("key",key,_g.keys.get(key));
-				haxe.Log.trace("isdown",{ fileName : "Main.hx", lineNumber : 103, className : "Main", methodName : "update", customParams : [isDown]});
+				haxe.Log.trace("isdown",{ fileName : "PlayerApp.hx", lineNumber : 69, className : "PlayerApp", methodName : "update", customParams : [isDown]});
 			}
 		};
 		checkKey("left");
 		checkKey("right");
 		checkKey("up");
-		var $it0 = this.players.iterator();
-		while( $it0.hasNext() ) {
-			var player = $it0.next();
-			player.update(this.keys,this.platforms);
-		}
-	}
-};
-var IMap = function() { };
-IMap.__name__ = true;
-Math.__name__ = true;
-var Player = function(game) {
-	this.game = game;
-	this.create();
-};
-Player.__name__ = true;
-Player.prototype = {
-	create: function() {
-		this.sprite = this.game.add.sprite(32,this.game.world.height / 2 - 150,"dude");
-		this.game.physics.arcade.enable(this.sprite);
-		this.sprite.body.gravity.y = 300;
-		this.sprite.body.collideWorldBounds = true;
-		this.sprite.animations.add("left",[0,1,2,3],10,true);
-		this.sprite.animations.add("right",[5,6,7,8],10,true);
-	}
-	,update: function(keys,platforms) {
-		this.game.physics.arcade.collide(this.sprite,platforms);
-		this.sprite.body.velocity.x = 0;
-		if(keys.left) {
-			this.sprite.body.velocity.x = -150;
-			this.sprite.animations.play("left");
-		} else if(keys.right) {
-			this.sprite.body.velocity.x = 150;
-			this.sprite.body.y += -.5;
-			this.sprite.animations.play("right");
-		} else {
-			this.sprite.animations.stop();
-			this.sprite.frame = 4;
-		}
-		if(keys.up && this.sprite.body.touching.down) this.sprite.body.velocity.y = -200;
 	}
 };
 var Reflect = function() { };
@@ -173,21 +101,6 @@ haxe.ds.StringMap.prototype = {
 	}
 	,get: function(key) {
 		return this.h["$" + key];
-	}
-	,keys: function() {
-		var a = [];
-		for( var key in this.h ) {
-		if(this.h.hasOwnProperty(key)) a.push(key.substr(1));
-		}
-		return HxOverrides.iter(a);
-	}
-	,iterator: function() {
-		return { ref : this.h, it : this.keys(), hasNext : function() {
-			return this.it.hasNext();
-		}, next : function() {
-			var i = this.it.next();
-			return this.ref["$" + i];
-		}};
 	}
 };
 var js = {};
@@ -281,18 +194,9 @@ js.Boot.__string_rec = function(o,s) {
 };
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
-Math.NaN = Number.NaN;
-Math.NEGATIVE_INFINITY = Number.NEGATIVE_INFINITY;
-Math.POSITIVE_INFINITY = Number.POSITIVE_INFINITY;
-Math.isFinite = function(i) {
-	return isFinite(i);
-};
-Math.isNaN = function(i1) {
-	return isNaN(i1);
-};
 String.__name__ = true;
 Array.__name__ = true;
-Main.main();
+PlayerApp.main();
 })();
 
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=player.js.map

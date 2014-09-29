@@ -17,17 +17,17 @@ import phaser.tilemap.Tilemap;
 class Player
 {
 	public var sprite: Sprite;
+	public var keys: Map<String, Bool>;
 	var game: Game;
 
 	public function new (game: Game)
 	{
 		this.game = game;
-	}
-
-
-	public function preload()
-	{
-		game.load.spritesheet('dude', 'assets/games/starstruck/dude.png', 32, 48);
+		keys = new Map();
+		keys.set('left', false);
+		keys.set('right', false);
+		keys.set('up', false);
+		create();
 	}
 
 	public function create()
@@ -43,20 +43,19 @@ class Player
 		sprite.animations.add('right', [5, 6, 7, 8], 10, true);
 	}
 
-	public function update(keys: Dynamic, platforms: Group) {
-
+	public function update(platforms: Group) {
 		game.physics.arcade.collide(sprite, platforms);
 	
 		sprite.body.velocity.x = 0;
 
-	    if (keys.left)
+	    if (keys.get('left'))
 	    {
 	        //  Move to the left
 	        sprite.body.velocity.x = -150;
 
 	        sprite.animations.play('left');
 	    }
-	    else if (keys.right)
+	    else if (keys.get('right'))
 	    {
 	        //  Move to the right
 	        sprite.body.velocity.x = 150;
@@ -73,9 +72,12 @@ class Player
 	    }
 
 	    //  Allow the sprite to jump if they are touching the ground.
-	    if (keys.up && sprite.body.touching.down)
+	    if (keys.get('up') && sprite.body.touching.down)
 	    {
 	        sprite.body.velocity.y = -200;
 	    }
+	}
+	public function dispose(){
+		sprite.destroy(true);
 	}
 }

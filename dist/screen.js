@@ -8,41 +8,85 @@ HxOverrides.iter = function(a) {
 		return this.arr[this.cur++];
 	}};
 };
-var Main = function() {
+var IMap = function() { };
+IMap.__name__ = true;
+Math.__name__ = true;
+var Player = function(game) {
+	this.game = game;
+	this.keys = new haxe.ds.StringMap();
+	this.keys.set("left",false);
+	this.keys.set("right",false);
+	this.keys.set("up",false);
+	this.create();
+};
+Player.__name__ = true;
+Player.prototype = {
+	create: function() {
+		this.sprite = this.game.add.sprite(32,this.game.world.height / 2 - 150,"dude");
+		this.game.physics.arcade.enable(this.sprite);
+		this.sprite.body.gravity.y = 300;
+		this.sprite.body.collideWorldBounds = true;
+		this.sprite.animations.add("left",[0,1,2,3],10,true);
+		this.sprite.animations.add("right",[5,6,7,8],10,true);
+	}
+	,update: function(platforms) {
+		this.game.physics.arcade.collide(this.sprite,platforms);
+		this.sprite.body.velocity.x = 0;
+		if(this.keys.get("left")) {
+			this.sprite.body.velocity.x = -150;
+			this.sprite.animations.play("left");
+		} else if(this.keys.get("right")) {
+			this.sprite.body.velocity.x = 150;
+			this.sprite.body.y += -.5;
+			this.sprite.animations.play("right");
+		} else {
+			this.sprite.animations.stop();
+			this.sprite.frame = 4;
+		}
+		if(this.keys.get("up") && this.sprite.body.touching.down) this.sprite.body.velocity.y = -200;
+	}
+	,dispose: function() {
+		this.sprite.destroy(true);
+	}
+};
+var ScreenApp = function() {
 	var _g = this;
 	this.game = new Phaser.Game(800,600,Phaser.AUTO,"",{ preload : $bind(this,this.preload), create : $bind(this,this.create), update : $bind(this,this.update)});
 	this.players = new haxe.ds.StringMap();
 	this.socket = io();
 	haxe.Timer.delay(function() {
-		_g.socket.emit("init","screen");
 	},2000);
 	this.socket.on("key",function(id,key,isDown) {
-		haxe.Log.trace("key",{ fileName : "Main.hx", lineNumber : 40, className : "Main", methodName : "new", customParams : [id,key,isDown]});
-		_g.keys[key] = isDown;
+		haxe.Log.trace("key",{ fileName : "ScreenApp.hx", lineNumber : 38, className : "ScreenApp", methodName : "new", customParams : [id,key,isDown]});
+		var player = _g.players.get(id);
+		player.keys.set(key,isDown);
+		haxe.Log.trace(player.keys.toString(),{ fileName : "ScreenApp.hx", lineNumber : 41, className : "ScreenApp", methodName : "new"});
+		_g.update();
 	});
-	this.socket.on("newConnection",function(id1,type) {
-		haxe.Log.trace("new connection",{ fileName : "Main.hx", lineNumber : 44, className : "Main", methodName : "new", customParams : [id1,type]});
-		var player = _g.players.get(id1);
-		if(player == null) {
-			player = new Player(_g.game);
-			_g.players.set(id1,player);
+	this.socket.on("connection.close",function(id1) {
+		haxe.Log.trace("close connection",{ fileName : "ScreenApp.hx", lineNumber : 45, className : "ScreenApp", methodName : "new", customParams : [id1]});
+		var player1 = _g.players.get(id1);
+		if(player1 != null) {
+			_g.players.remove(id1);
+			player1.dispose();
 		}
-		_g.game.camera.follow(player.sprite);
-		player.sprite.animations.add("right",[5,6,7,8],10,true);
 	});
-	this.keys = new haxe.ds.StringMap();
-	this.keys.set("left",false);
-	false;
-	this.keys.set("right",false);
-	false;
-	this.keys.set("up",false);
-	false;
+	this.socket.on("connection.open",function(id2,type) {
+		haxe.Log.trace("new connection",{ fileName : "ScreenApp.hx", lineNumber : 53, className : "ScreenApp", methodName : "new", customParams : [id2,type]});
+		var player2 = _g.players.get(id2);
+		if(player2 == null) {
+			player2 = new Player(_g.game);
+			_g.players.set(id2,player2);
+		}
+		_g.game.camera.follow(player2.sprite);
+		player2.sprite.animations.add("right",[5,6,7,8],10,true);
+	});
 };
-Main.__name__ = true;
-Main.main = function() {
-	new Main();
+ScreenApp.__name__ = true;
+ScreenApp.main = function() {
+	new ScreenApp();
 };
-Main.prototype = {
+ScreenApp.prototype = {
 	preload: function() {
 		this.game.load.image("background","assets/misc/starfield.jpg");
 		this.game.load.image("ground","assets/tilemaps/tiles/ground_1x1.png");
@@ -65,70 +109,28 @@ Main.prototype = {
 			deltaY += Math.round((Math.random() - .5) * 100);
 			ground.body.immovable = true;
 		}
-		this.cursors = this.game.input.keyboard.createCursorKeys();
 	}
 	,update: function() {
-		var _g = this;
-		var checkKey = function(key) {
-			var isDown = Reflect.field(_g.cursors,key) != null && Reflect.field(_g.cursors,key).isDown;
-			if(isDown != _g.keys.get(key)) {
-				_g.keys.set(key,isDown);
-				isDown;
-				_g.socket.emit("key",key,_g.keys.get(key));
-				haxe.Log.trace("isdown",{ fileName : "Main.hx", lineNumber : 103, className : "Main", methodName : "update", customParams : [isDown]});
-			}
-		};
-		checkKey("left");
-		checkKey("right");
-		checkKey("up");
 		var $it0 = this.players.iterator();
 		while( $it0.hasNext() ) {
 			var player = $it0.next();
-			player.update(this.keys,this.platforms);
+			haxe.Log.trace("xxx2",{ fileName : "ScreenApp.hx", lineNumber : 100, className : "ScreenApp", methodName : "update", customParams : [player.keys]});
+			player.update(this.platforms);
 		}
 	}
 };
-var IMap = function() { };
-IMap.__name__ = true;
-Math.__name__ = true;
-var Player = function(game) {
-	this.game = game;
-	this.create();
+var Std = function() { };
+Std.__name__ = true;
+Std.string = function(s) {
+	return js.Boot.__string_rec(s,"");
 };
-Player.__name__ = true;
-Player.prototype = {
-	create: function() {
-		this.sprite = this.game.add.sprite(32,this.game.world.height / 2 - 150,"dude");
-		this.game.physics.arcade.enable(this.sprite);
-		this.sprite.body.gravity.y = 300;
-		this.sprite.body.collideWorldBounds = true;
-		this.sprite.animations.add("left",[0,1,2,3],10,true);
-		this.sprite.animations.add("right",[5,6,7,8],10,true);
-	}
-	,update: function(keys,platforms) {
-		this.game.physics.arcade.collide(this.sprite,platforms);
-		this.sprite.body.velocity.x = 0;
-		if(keys.left) {
-			this.sprite.body.velocity.x = -150;
-			this.sprite.animations.play("left");
-		} else if(keys.right) {
-			this.sprite.body.velocity.x = 150;
-			this.sprite.body.y += -.5;
-			this.sprite.animations.play("right");
-		} else {
-			this.sprite.animations.stop();
-			this.sprite.frame = 4;
-		}
-		if(keys.up && this.sprite.body.touching.down) this.sprite.body.velocity.y = -200;
-	}
+var StringBuf = function() {
+	this.b = "";
 };
-var Reflect = function() { };
-Reflect.__name__ = true;
-Reflect.field = function(o,field) {
-	try {
-		return o[field];
-	} catch( e ) {
-		return null;
+StringBuf.__name__ = true;
+StringBuf.prototype = {
+	add: function(x) {
+		this.b += Std.string(x);
 	}
 };
 var haxe = {};
@@ -174,6 +176,12 @@ haxe.ds.StringMap.prototype = {
 	,get: function(key) {
 		return this.h["$" + key];
 	}
+	,remove: function(key) {
+		key = "$" + key;
+		if(!this.h.hasOwnProperty(key)) return false;
+		delete(this.h[key]);
+		return true;
+	}
 	,keys: function() {
 		var a = [];
 		for( var key in this.h ) {
@@ -188,6 +196,20 @@ haxe.ds.StringMap.prototype = {
 			var i = this.it.next();
 			return this.ref["$" + i];
 		}};
+	}
+	,toString: function() {
+		var s = new StringBuf();
+		s.b += "{";
+		var it = this.keys();
+		while( it.hasNext() ) {
+			var i = it.next();
+			if(i == null) s.b += "null"; else s.b += "" + i;
+			s.b += " => ";
+			s.add(Std.string(this.get(i)));
+			if(it.hasNext()) s.b += ", ";
+		}
+		s.b += "}";
+		return s.b;
 	}
 };
 var js = {};
@@ -292,7 +314,7 @@ Math.isNaN = function(i1) {
 };
 String.__name__ = true;
 Array.__name__ = true;
-Main.main();
+ScreenApp.main();
 })();
 
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=screen.js.map

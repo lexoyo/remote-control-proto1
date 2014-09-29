@@ -3,7 +3,6 @@ var IMap = function() { };
 IMap.__name__ = true;
 var PlayerApp = function() {
 	var _g = this;
-	this.game = new Phaser.Game(800,600,Phaser.AUTO,"",{ preload : $bind(this,this.preload), create : $bind(this,this.create), update : $bind(this,this.update)});
 	this.socket = io();
 	haxe.Timer.delay(function() {
 		_g.socket.emit("init","screen");
@@ -24,18 +23,80 @@ var PlayerApp = function() {
 	false;
 	this.keys.set("up",false);
 	false;
+	window.addEventListener("load",$bind(this,this.onLoad));
 };
 PlayerApp.__name__ = true;
 PlayerApp.main = function() {
 	new PlayerApp();
 };
 PlayerApp.prototype = {
-	preload: function() {
-		this.game.load.image("background","assets/misc/starfield.jpg");
-		this.game.load.image("ground","assets/tilemaps/tiles/ground_1x1.png");
-	}
-	,create: function() {
-		this.cursors = this.game.input.keyboard.createCursorKeys();
+	onLoad: function(e) {
+		var _g = this;
+		var checkKey = function(key) {
+			haxe.Log.trace("check",{ fileName : "PlayerApp.hx", lineNumber : 53, className : "PlayerApp", methodName : "onLoad", customParams : [key,window.document.querySelector("." + key)]});
+			haxe.Log.trace(window.document.getElementsByClassName(key),{ fileName : "PlayerApp.hx", lineNumber : 54, className : "PlayerApp", methodName : "onLoad"});
+			var onMouseDown = function(e1) {
+				if(!_g.keys.get(key)) {
+					_g.keys.set(key,true);
+					true;
+					_g.socket.emit("key",key,_g.keys.get(key));
+				}
+			};
+			var onMouseUp = function(e2) {
+				if(_g.keys.get(key)) {
+					_g.keys.set(key,false);
+					false;
+					_g.socket.emit("key",key,_g.keys.get(key));
+				}
+			};
+			window.document.getElementsByClassName(key)[0].addEventListener("mousedown",onMouseDown);
+			window.document.getElementsByClassName(key)[0].addEventListener("mouseup",onMouseUp);
+		};
+		checkKey("left");
+		checkKey("right");
+		checkKey("up");
+		(window.top.document.body != null?window.top.document.body:window.document.body).addEventListener("keydown",function(e3) {
+			var onKeyDown = function(key1) {
+				if(!_g.keys.get(key1)) {
+					_g.keys.set(key1,true);
+					true;
+					_g.socket.emit("key",key1,_g.keys.get(key1));
+				}
+			};
+			var _g1 = e3.keyCode;
+			switch(_g1) {
+			case 37:
+				onKeyDown("left");
+				break;
+			case 38:
+				onKeyDown("up");
+				break;
+			case 39:
+				onKeyDown("right");
+				break;
+			}
+		});
+		(window.top.document.body != null?window.top.document.body:window.document.body).addEventListener("keyup",function(e4) {
+			var onKeyDown1 = function(key2) {
+				if(_g.keys.get(key2)) {
+					_g.keys.set(key2,false);
+					false;
+					_g.socket.emit("key",key2,_g.keys.get(key2));
+				}
+			};
+			var _g2 = e4.keyCode;
+			switch(_g2) {
+			case 37:
+				onKeyDown1("left");
+				break;
+			case 38:
+				onKeyDown1("up");
+				break;
+			case 39:
+				onKeyDown1("right");
+				break;
+			}
+		});
 	}
 	,update: function() {
 		var _g = this;
@@ -45,7 +106,7 @@ PlayerApp.prototype = {
 				_g.keys.set(key,isDown);
 				isDown;
 				_g.socket.emit("key",key,_g.keys.get(key));
-				haxe.Log.trace("isdown",{ fileName : "PlayerApp.hx", lineNumber : 72, className : "PlayerApp", methodName : "update", customParams : [isDown]});
+				haxe.Log.trace("isdown",{ fileName : "PlayerApp.hx", lineNumber : 115, className : "PlayerApp", methodName : "update", customParams : [isDown]});
 			}
 		};
 		checkKey("left");

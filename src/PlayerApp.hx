@@ -5,6 +5,7 @@
 package;
 
 import js.Lib;
+import js.Browser;
 import phaser.Phaser;
 import phaser.core.Game;
 import phaser.gameobjects.Events;
@@ -27,7 +28,6 @@ class PlayerApp
 
 	public function new ()
 	{
-		game = new Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 		socket = untyped io();
 		haxe.Timer.delay(function(){
 			socket.emit('init', 'screen');
@@ -46,19 +46,62 @@ class PlayerApp
 		keys['left'] = false;
 		keys['right'] = false;
 		keys['up'] = false;
+		Browser.window.addEventListener('load', onLoad);
 	}
-
-
-	function preload()
-	{
-		game.load.image('background','assets/misc/starfield.jpg');
-		game.load.image('ground', 'assets/tilemaps/tiles/ground_1x1.png');
-	}
-
-	function create()
-	{
-		cursors = game.input.keyboard.createCursorKeys();
-
+	function onLoad(e){
+		function checkKey(key: String){
+			trace('check', key, Browser.document.querySelector('.' + key));
+			trace(Browser.document.getElementsByClassName(key));
+			function onMouseDown(e){
+				if (!keys[key])
+				{
+					keys[key] = true;
+					socket.emit('key', key, keys[key]);
+				}
+			};
+			function onMouseUp(e){
+				if (keys[key])
+				{
+					keys[key] = false;
+					socket.emit('key', key, keys[key]);
+				}
+			};
+			Browser.document.getElementsByClassName(key)[0]
+				.addEventListener('mousedown', onMouseDown); 
+			Browser.document.getElementsByClassName(key)[0]
+				.addEventListener('mouseup', onMouseUp);
+		}
+		checkKey('left');
+		checkKey('right');
+		checkKey('up');
+		(Browser.window.top.document.body != null ? Browser.window.top.document.body : Browser.document.body)
+			.addEventListener('keydown', function(e){
+				function onKeyDown(key){
+					if (!keys[key]){
+						keys[key] = true;
+						socket.emit('key', key, keys[key]);
+					}
+				}
+				switch(e.keyCode){
+					case 37: onKeyDown('left');
+					case 38: onKeyDown('up');
+					case 39: onKeyDown('right');
+				}
+			});
+		(Browser.window.top.document.body != null ? Browser.window.top.document.body : Browser.document.body)
+			.addEventListener('keyup', function(e){
+				function onKeyDown(key){
+					if (keys[key]){
+						keys[key] = false;
+						socket.emit('key', key, keys[key]);
+					}
+				}
+				switch(e.keyCode){
+					case 37: onKeyDown('left');
+					case 38: onKeyDown('up');
+					case 39: onKeyDown('right');
+				}
+			}); 
 	}
 
 	function update() {

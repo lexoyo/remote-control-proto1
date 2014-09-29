@@ -28,7 +28,7 @@ class ScreenApp
 
 	public function new ()
 	{
-		game = new Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+		game = new Game(800, 600, Phaser.AUTO, 'screen', { preload: preload, create: create, update: update });
 		players = new Map();
 		socket = untyped io();
 		haxe.Timer.delay(function(){
@@ -64,7 +64,7 @@ class ScreenApp
 	{
 		game.load.image('background','assets/misc/starfield.jpg');
 		//game.load.image('ground', 'assets/sprites/platform.png');
-		game.load.image('ground', 'assets/tilemaps/tiles/ground_1x1.png');
+		game.load.spritesheet('ground', 'assets/tilemaps/tiles/ground_1x1.png', 32 * 3, 32);
 		//player.preload();
 
 		game.load.spritesheet('dude', 'assets/games/starstruck/dude.png', 32, 48);
@@ -85,15 +85,19 @@ class ScreenApp
 
 		var w = 32;
 		var deltaY = 0;
-		for (i in 0...100){
-			var ground = platforms.create((i * w), deltaY + (game.world.height / 2) - w, 'ground');
-			deltaY += Math.round((Math.random() - .5) * 100);
-			//ground.angle = -2;
+		var prevY = 0;
+		for (i in 0...1000){
+			var frame = Math.round(Math.random() * 24 / 4);
+			var ground = platforms.create((i * w), prevY + deltaY + (game.world.height / 2) - w, 'ground', frame);
+			var d = Math.round((Math.random() - .5) * 100);
+			deltaY += d;
+			//ground.angle = Math.atan2(d, 32) * 360 / Math.PI;
 			ground.body.immovable = true;
 		}
 	}
 
 	function update() {
+		var playersArray = [];
 		var numMoving = 0;
 		var sumX: Float = 0;
 		var sumY: Float = 0;
@@ -106,12 +110,17 @@ class ScreenApp
 				sumX += player.sprite.x;
 				sumY += player.sprite.y;
 			}
+			playersArray.push(player);
 		}
 		if(numMoving > 0){
 			trace('moving', numMoving, Math.round(sumX/numMoving));
 			game.camera.x = Math.round(sumX/numMoving) - 400;
 			game.camera.y = Math.round(sumY/numMoving) - 300;
 		}
-		
+		for (i in 0...playersArray.length){
+			for(j in i...playersArray.length){
+				game.physics.arcade.collide(playersArray[i].sprite, playersArray[j].sprite);
+			}
+		}
 	}
 }

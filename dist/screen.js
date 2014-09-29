@@ -51,7 +51,7 @@ Player.prototype = {
 };
 var ScreenApp = function() {
 	var _g = this;
-	this.game = new Phaser.Game(800,600,Phaser.AUTO,"",{ preload : $bind(this,this.preload), create : $bind(this,this.create), update : $bind(this,this.update)});
+	this.game = new Phaser.Game(800,600,Phaser.AUTO,"screen",{ preload : $bind(this,this.preload), create : $bind(this,this.create), update : $bind(this,this.update)});
 	this.players = new haxe.ds.StringMap();
 	this.socket = io();
 	haxe.Timer.delay(function() {
@@ -86,7 +86,7 @@ ScreenApp.main = function() {
 ScreenApp.prototype = {
 	preload: function() {
 		this.game.load.image("background","assets/misc/starfield.jpg");
-		this.game.load.image("ground","assets/tilemaps/tiles/ground_1x1.png");
+		this.game.load.spritesheet("ground","assets/tilemaps/tiles/ground_1x1.png",96,32);
 		this.game.load.spritesheet("dude","assets/games/starstruck/dude.png",32,48);
 	}
 	,create: function() {
@@ -99,15 +99,19 @@ ScreenApp.prototype = {
 		this.platforms.enableBody = true;
 		var w = 32;
 		var deltaY = 0;
+		var prevY = 0;
 		var _g = 0;
-		while(_g < 100) {
+		while(_g < 1000) {
 			var i = _g++;
-			var ground = this.platforms.create(i * w,deltaY + this.game.world.height / 2 - w,"ground");
-			deltaY += Math.round((Math.random() - .5) * 100);
+			var frame = Math.round(Math.random() * 24 / 4);
+			var ground = this.platforms.create(i * w,prevY + deltaY + this.game.world.height / 2 - w,"ground",frame);
+			var d = Math.round((Math.random() - .5) * 100);
+			deltaY += d;
 			ground.body.immovable = true;
 		}
 	}
 	,update: function() {
+		var playersArray = [];
 		var numMoving = 0;
 		var sumX = 0;
 		var sumY = 0;
@@ -115,16 +119,29 @@ ScreenApp.prototype = {
 		while( $it0.hasNext() ) {
 			var player = $it0.next();
 			player.update(this.platforms);
-			if(player.sprite.body.velocity.x) {
+			var isMoving = player.sprite.body.velocity.x != 0 || player.sprite.body.velocity.y != 0;
+			if(isMoving) {
 				numMoving++;
 				sumX += player.sprite.x;
 				sumY += player.sprite.y;
 			}
+			playersArray.push(player);
 		}
 		if(numMoving > 0) {
-			haxe.Log.trace("moving",{ fileName : "ScreenApp.hx", lineNumber : 109, className : "ScreenApp", methodName : "update", customParams : [numMoving,Math.round(sumX / numMoving)]});
+			haxe.Log.trace("moving",{ fileName : "ScreenApp.hx", lineNumber : 116, className : "ScreenApp", methodName : "update", customParams : [numMoving,Math.round(sumX / numMoving)]});
 			this.game.camera.x = Math.round(sumX / numMoving) - 400;
 			this.game.camera.y = Math.round(sumY / numMoving) - 300;
+		}
+		var _g1 = 0;
+		var _g = playersArray.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var _g3 = i;
+			var _g2 = playersArray.length;
+			while(_g3 < _g2) {
+				var j = _g3++;
+				this.game.physics.arcade.collide(playersArray[i].sprite,playersArray[j].sprite);
+			}
 		}
 	}
 };

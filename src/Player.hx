@@ -43,40 +43,39 @@ class Player
 		sprite.animations.add('right', [5, 6, 7, 8], 10, true);
 	}
 
-	public function update(cursors: Dynamic, platforms: Group) {
+	public function update(keys: Dynamic, platforms: Group) {
 
-	game.physics.arcade.collide(sprite, platforms);
-    
+		game.physics.arcade.collide(sprite, platforms);
 	
-	sprite.body.velocity.x = 0;
+		sprite.body.velocity.x = 0;
 
-    if (cursors.left.isDown)
-    {
-        //  Move to the left
-        sprite.body.velocity.x = -150;
+	    if (keys.left)
+	    {
+	        //  Move to the left
+	        sprite.body.velocity.x = -150;
 
-        sprite.animations.play('left');
-    }
-    else if (cursors.right.isDown)
-    {
-        //  Move to the right
-        sprite.body.velocity.x = 150;
-        sprite.body.y += -.5;
+	        sprite.animations.play('left');
+	    }
+	    else if (keys.right)
+	    {
+	        //  Move to the right
+	        sprite.body.velocity.x = 150;
+	        sprite.body.y += -.5;
+	
+	        sprite.animations.play('right');
+	    }
+	    else
+	    {
+	        //  Stand still
+	        sprite.animations.stop();
 
-        sprite.animations.play('right');
-    }
-    else
-    {
-        //  Stand still
-        sprite.animations.stop();
+	        sprite.frame = 4;
+	    }
 
-        sprite.frame = 4;
-    }
-
-    //  Allow the sprite to jump if they are touching the ground.
-    if (cursors.up.isDown && sprite.body.touching.down)
-    {
-        sprite.body.velocity.y = -200;
-    }
+	    //  Allow the sprite to jump if they are touching the ground.
+	    if (keys.up && sprite.body.touching.down)
+	    {
+	        sprite.body.velocity.y = -200;
+	    }
 	}
 }

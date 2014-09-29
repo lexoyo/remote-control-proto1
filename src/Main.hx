@@ -20,7 +20,8 @@ class Main
 	var player: Player;
 	var platforms: Group;
 	var cursors: Dynamic;
-	var socket: Dynamic;	
+	var socket: Dynamic;
+	var keys: Dynamic;
 
 	static function main(){
 		new Main();
@@ -29,6 +30,11 @@ class Main
 		socket.on('keydown', function(id, key){
 			trace('keydown', id, key);
 		});
+		keys = {
+			left: false,
+			right: false,
+			up: false
+		};
 	}
 
 	public function new ()
@@ -76,6 +82,17 @@ class Main
 	}
 
 	function update() {
-		player.update(cursors, platforms);
+		function checkKey(key){
+		    if (cursors[key].isDown !== keys[key])
+		    {
+				keys[key] = cursors[key].isDown;
+				io.emit('key', key, keys[key]);
+		    }
+		};
+		checkKey('left');
+		checkKey('right');
+		checkKey('up');
+
+		player.update(keys, platforms);
 	}
 }
